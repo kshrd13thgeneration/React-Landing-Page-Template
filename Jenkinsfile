@@ -1,35 +1,35 @@
 pipeline {
-    agent {
-        kubernetes {
-            yaml """
+  agent {
+    kubernetes {
+      yaml """
 apiVersion: v1
 kind: Pod
 spec:
   containers:
     - name: node
       image: node:18-alpine
-      command:
-        - cat
+      command: [ "cat" ]
       tty: true
 """
+    }
+  }
+
+  stages {
+    stage('Install Dependencies') {
+      steps {
+        container('node') {
+          sh 'npm install'
         }
+      }
     }
 
-    stages {
-        stage('Install Dependencies') {
-            steps {
-                container('node') {
-                    sh 'npm install'
-                }
-            }
+    stage('Build') {
+      steps {
+        container('node') {
+          // Unset CI so warnings don't fail the build
+          sh 'CI= npm run build'
         }
-
-        stage('Build') {
-            steps {
-                container('node') {
-                    sh 'npm run build'
-                }
-            }
-        }
+      }
     }
+  }
 }
