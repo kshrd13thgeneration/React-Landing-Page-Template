@@ -1,23 +1,33 @@
 pipeline {
-    agent any
+    agent {
+        kubernetes {
+            yaml """
+apiVersion: v1
+kind: Pod
+spec:
+  containers:
+    - name: node
+      image: node:18-alpine
+      command:
+        - cat
+      tty: true
+"""
+        }
+    }
+
     stages {
-        stage('Build') {
-            agent {
-                docker { image 'node:18-alpine' }
-            }
+        stage('Install Dependencies') {
             steps {
-                sh 'npm install'
-                sh 'npm run build'
+                container('node') {
+                    sh 'npm install'
+                }
             }
         }
-        stage('Deploy with Helm') {
-            agent {
-                docker { image 'lachlanevenson/k8s-helm:latest' }  // Official Helm image
-            }
+
+        stage('Build') {
             steps {
-                withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG')]) {
-                    sh 'helm repo update'
-                    sh 'helm upgrade --install my-react-app ./helm-chart --namespace default'
+                container('node') {
+                    sh 'npm run build'
                 }
             }
         }
