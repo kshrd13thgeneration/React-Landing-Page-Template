@@ -1,43 +1,15 @@
-pipeline {
-  agent any
+# Dockerfile for React App
+FROM node:18-alpine
 
-  stages {
-    stage('Install Dependencies') {
-      steps {
-        echo 'Installing npm dependencies...'
-        sh 'npm ci'
-      }
-    }
+WORKDIR /app
 
-    stage('Test') {
-      steps {
-        echo 'Running tests...'
-        sh 'npm test'
-      }
-    }
+COPY package*.json ./
+RUN npm ci
 
-    stage('Build') {
-      steps {
-        echo 'Building the React app...'
-        sh 'npm run build'
-      }
-    }
+COPY . .
 
-    stage('Deploy (Simulated)') {
-      steps {
-        echo 'Deploy stage - add your deploy steps here'
-        // For now, just echo deploy success
-        sh 'echo "Deploy step completed (simulate deploy)"'
-      }
-    }
-  }
+RUN npm run build
 
-  post {
-    success {
-      echo 'Pipeline succeeded!'
-    }
-    failure {
-      echo 'Pipeline failed!'
-    }
-  }
-}
+# Serve build with simple http server
+RUN npm install -g serve
+CMD ["serve", "-s", "build", "-l", "3000"]
